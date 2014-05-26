@@ -44,15 +44,40 @@ end
 function plot(data::PlotInputs, start::Real=-10, stop::Real=10;
                  border::Bool=true, labels::Bool=true, title::Bool=true,
                  cols::Int=60, rows::Int=16, margin::Int=9,
-                 scalefunc::Function=identity)
-    grid = fill(char(0x2800), cols, rows)
+                 invert::Bool=false, gridlines::Bool=false)
+
+    if gridlines
+        if invert
+            fill_char=char(0x283F)
+        else
+            fill_char=char(0x2812)
+        end
+    else
+        if invert
+            fill_char=char(0x28FF)
+        else
+            fill_char=char(0x2800)
+        end
+    end
+    grid = fill(fill_char, cols, rows)
+    if invert
+        base_char=10495
+    else
+        base_char=10240
+    end
     left, right = sides = ((0, 1, 2, 6), (3, 4, 5, 7))
     function showdot(x, y)  # Assumes x & y are already scaled to the grid.
         invy = (rows - y)*0.9999
         col, col2 = int(floor(x)), int(floor(x*2))
         row, row4 = int(floor(invy)), int(floor(invy*4))
-        grid[col + 1, row + 1] |= 1 << sides[1 + (col2 & 1)][1 + (row4 & 3)]
+        offset=1 << sides[1 + (col2 & 1)][1 + (row4 & 3)]
+        if invert
+            grid[col + 1, row + 1] = convert(Char, base_char-offset)
+        else
+            grid[col + 1, row + 1] = convert(Char, base_char+offset)
+        end
     end
+
 
     continuous = isa(data, Vector{Function})
     if continuous
